@@ -326,6 +326,53 @@ namespace MiniJSON {
                 }
             }
 
+            bool EatComment() {
+                if (PeekChar != '/')
+                {
+                    return false;
+                }
+                json.Read();
+                switch (PeekChar)
+                {
+                    case '/':
+                        //Line comment
+                        while (true)
+                        {
+                            json.Read();
+                            if (PeekChar == '\n')
+                            {
+                                json.Read();
+                                return true;
+                            }
+                            if (json.Peek() == -1)
+                            {
+                                return false;
+                            }
+                        }
+                    case '*':
+                        //Block comment
+                        while (true)
+                        {
+                            json.Read();
+                            if (PeekChar == '*')
+                            {
+                                json.Read();
+                                if (PeekChar == '/')
+                                {
+                                    json.Read();
+                                    return true;
+                                }
+                            }
+                            if (json.Peek() == -1)
+                            {
+                                return false;
+                            }
+                        }
+                    default:
+                        return false;
+                }
+            }
+
             char PeekChar {
                 get {
                     return Convert.ToChar(json.Peek());
@@ -357,6 +404,10 @@ namespace MiniJSON {
             TOKEN NextToken {
                 get {
                     EatWhitespace();
+                    while (EatComment())
+                    {
+                        EatWhitespace();
+                    }
 
                     if (json.Peek() == -1) {
                         return TOKEN.NONE;
